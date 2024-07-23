@@ -8,6 +8,8 @@
 
 # testing
 /coverage
+*.sh
+*.txt
 
 # next.js
 /.next/
