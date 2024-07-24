@@ -1,7 +1,7 @@
-// "use client";
+"use client";
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../lib/axios';
 
 const Page = () => {
   const [workouts, setWorkouts] = useState([]);
@@ -14,11 +14,12 @@ const Page = () => {
   const [rounds, setRounds] = useState(0);
   const [restBetweenRounds, setRestBetweenRounds] = useState(0);
   const [totalTime, setTotalTime] = useState(0);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchWorkouts = async () => {
       const token = localStorage.getItem('token');
-      const response = await axios.get('/api/workouts', {
+      const response = await api.get('/api/workouts', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setWorkouts(response.data);
@@ -38,17 +39,33 @@ const Page = () => {
   };
 
   const handleCreateWorkout = async () => {
+    setError('');
+    if (!name) {
+      setError('Workout name cannot be empty.');
+      return;
+    }
+    for (const exercise of exercises) {
+      if (!exercise.name) {
+        setError('Exercise names cannot be empty.');
+        return;
+      }
+    }
+
     const token = localStorage.getItem('token');
-    await axios.post('/api/workouts', {
-      name,
-      exercises
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const response = await axios.get('/api/workouts', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    setWorkouts(response.data);
+    try {
+      await api.post('/api/workouts', {
+        name,
+        exercises
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const response = await api.get('/api/workouts', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setWorkouts(response.data);
+    } catch (error) {
+      setError('Failed to create workout. Please try again.');
+    }
   };
 
   const handleSelectWorkout = (workout) => {
@@ -70,6 +87,7 @@ const Page = () => {
     <div>
       <h1>Dashboard</h1>
       <h2>Create Workout</h2>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <input
         type="text"
         value={name}

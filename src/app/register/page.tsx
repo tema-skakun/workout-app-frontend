@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../../lib/axios';
 import { useRouter } from 'next/navigation';
 
 const Page = () => {
@@ -11,7 +11,7 @@ const Page = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await axios.post('/api/auth/register', { email, password });
+    await api.post('/api/auth/register', { email, password });
     router.push('/login');
   };
 
