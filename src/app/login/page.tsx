@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from '@/context/AuthContext';
 import { useState } from 'react';
 import api from '../../lib/axios';
 import { useRouter } from 'next/navigation';
@@ -8,11 +9,13 @@ const Page = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const { data } = await api.post('/api/auth/login', { email, password });
     localStorage.setItem('token', data.token);
+    login();
     router.push('/dashboard');
   };
 
