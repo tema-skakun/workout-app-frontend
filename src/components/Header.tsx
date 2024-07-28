@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import Navbar from './Navbar';
 
 const Header = () => {
   const { isLoggedIn, logout } = useAuth();
@@ -15,7 +16,12 @@ const Header = () => {
   return (
     <header>
       <h1>Workout App</h1>
-      {isLoggedIn && <button onClick={handleLogout}>Logout</button>}
+      {isLoggedIn && (
+        <>
+          <Navbar />
+          <button onClick={handleLogout}>Logout</button>
+        </>
+      )}
     </header>
   );
 };

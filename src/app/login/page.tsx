@@ -16,7 +16,7 @@ const Page = () => {
     const { data } = await api.post('/api/auth/login', { email, password });
     localStorage.setItem('token', data.token);
     login();
-    router.push('/dashboard');
+    router.push('/workouts');
   };
 
   return (

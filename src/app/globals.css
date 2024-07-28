@@ -25,10 +25,27 @@ header button:hover {
     background-color: #c82333;
 }
 
-/* Footer styles */
 footer {
     padding: 1rem;
     background: #f8f9fa;
     border-top: 1px solid #dee2e6;
     text-align: center;
+}
+
+nav {
+  display: flex;
+  gap: 1rem;
+}
+
+nav button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+nav button:hover {
+  background-color: #0056b3;
 }
