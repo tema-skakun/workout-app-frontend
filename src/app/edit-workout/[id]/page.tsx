@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from 'react';
-import api from '../../lib/axios';
+import { useState, useEffect } from 'react';
+import api from '../../../lib/axios';
+import { useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 
-const CreateWorkoutPage = () => {
+const EditWorkoutPage = () => {
+  const [workout, setWorkout] = useState<any>(null);
   const [name, setName] = useState('');
   const [exercises, setExercises] = useState([{ name: '' }]);
   const [warmupTime, setWarmupTime] = useState(0);
@@ -12,6 +15,27 @@ const CreateWorkoutPage = () => {
   const [rounds, setRounds] = useState(1);
   const [restBetweenRounds, setRestBetweenRounds] = useState(0);
   const [error, setError] = useState('');
+  const router = useRouter();
+  const { id } = useParams();
+
+  useEffect(() => {
+    const fetchWorkout = async () => {
+      const token = localStorage.getItem('token');
+      const response = await api.get(`/api/workouts/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setWorkout(response.data);
+      setName(response.data.name);
+      setExercises(response.data.exercises);
+      setWarmupTime(response.data.warmupTime);
+      setExerciseTime(response.data.exerciseTime);
+      setRestTime(response.data.restTime);
+      setRounds(response.data.rounds);
+      setRestBetweenRounds(response.data.restBetweenRounds);
+    };
+
+    fetchWorkout();
+  }, [id]);
 
   const handleAddExercise = () => {
     setExercises([...exercises, { name: '' }]);
@@ -23,7 +47,7 @@ const CreateWorkoutPage = () => {
     setExercises(newExercises);
   };
 
-  const handleCreateWorkout = async () => {
+  const handleSaveWorkout = async () => {
     setError('');
     if (!name) {
       setError('Workout name cannot be empty.');
@@ -38,7 +62,7 @@ const CreateWorkoutPage = () => {
 
     const token = localStorage.getItem('token');
     try {
-      await api.post('/api/workouts', {
+      await api.put(`/api/workouts/${id}`, {
         name,
         exercises,
         warmupTime,
@@ -49,21 +73,17 @@ const CreateWorkoutPage = () => {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setName('');
-      setExercises([{ name: '' }]);
-      setWarmupTime(0);
-      setExerciseTime(0);
-      setRestTime(0);
-      setRounds(1);
-      setRestBetweenRounds(0);
+      router.push('/workouts');
     } catch (error) {
-      setError('Failed to create workout. Please try again.');
+      setError('Failed to update workout. Please try again.');
     }
   };
 
+  if (!workout) return <p>Loading...</p>;
+
   return (
     <div>
-      <h1>Create Workout</h1>
+      <h1>Edit Workout</h1>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <input
         type="text"
@@ -123,9 +143,9 @@ const CreateWorkoutPage = () => {
         </div>
       ))}
       <button onClick={handleAddExercise}>Add Exercise</button>
-      <button onClick={handleCreateWorkout}>Create Workout</button>
+      <button onClick={handleSaveWorkout}>Save Workout</button>
     </div>
   );
 };
 
-export default CreateWorkoutPage;
+export default EditWorkoutPage;

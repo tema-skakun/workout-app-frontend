@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import api from '../../lib/axios';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-const YourWorkouts = () => {
+const YourWorkoutsPage = () => {
   const [workouts, setWorkouts] = useState([]);
+  const [error, setError] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     const fetchWorkouts = async () => {
@@ -18,16 +22,35 @@ const YourWorkouts = () => {
     fetchWorkouts();
   }, []);
 
+  const handleDelete = async (id: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      await api.delete(`/api/workouts/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setWorkouts(workouts.filter(workout => workout._id !== id));
+    } catch (err) {
+      setError('Failed to delete workout. Please try again.');
+    }
+  };
+
   return (
     <div>
       <h1>Your Workouts</h1>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <ul>
         {workouts.map(workout => (
-          <li key={workout._id}>{workout.name}</li>
+          <li key={workout._id}>
+            <Link href={`/train-workout/${workout._id}`}>
+              {workout.name}
+            </Link>
+            {/*<button onClick={() => handleEdit(workout._id)}>Edit</button>*/}
+            <button onClick={() => handleDelete(workout._id)}>Delete</button>
+          </li>
         ))}
       </ul>
     </div>
   );
 };
 
-export default YourWorkouts;
+export default YourWorkoutsPage;
