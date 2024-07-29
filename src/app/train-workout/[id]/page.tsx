@@ -5,9 +5,26 @@ import { useRouter, useParams } from 'next/navigation';
 import api from '../../../lib/axios';
 import styles from './page.module.css';
 
+interface Exercise {
+  name: string;
+}
+
+interface Workout {
+  name: string;
+  exercises: Exercise[];
+  warmupTime: number;
+  exerciseTime: number;
+  restTime: number;
+  rounds: number;
+  restBetweenRounds: number;
+}
+
 const TrainWorkoutPage = () => {
-  const [workout, setWorkout] = useState<any>(null);
+  const [workout, setWorkout] = useState<Workout | null>(null);
   const [isActive, setIsActive] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [roundIndex, setRoundIndex] = useState(0);
   const [stage, setStage] = useState('warmup');
   const [timeLeft, setTimeLeft] = useState(0);
   const [intervalId, setIntervalId] = useState<NodeJS.Timer | null>(null);
@@ -16,21 +33,26 @@ const TrainWorkoutPage = () => {
 
   useEffect(() => {
     const fetchWorkout = async () => {
-      const token = localStorage.getItem('token');
-      const response = await api.get(`/api/workouts/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setWorkout(response.data);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await api.get(`/api/workouts/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setWorkout(response.data);
+      } catch (error) {
+        console.error("Failed to fetch workout", error);
+      }
     };
 
     fetchWorkout();
   }, [id]);
 
-  const stages = {
-    warmup: { duration: 3000, label: 'Разминка' },
-    exercise: { duration: 6000, label: 'Нагрузка' },
-    rest: { duration: 2000, label: 'Отдых' },
-  };
+  useEffect(() => {
+    if (workout) {
+      setStage('warmup');
+      setTimeLeft(workout.warmupTime * 1000);
+    }
+  }, [workout]);
 
   const startTimer = (duration: number) => {
     setTimeLeft(duration);
@@ -46,32 +68,75 @@ const TrainWorkoutPage = () => {
     setIntervalId(id);
   };
 
+  const handleStartPause = () => {
+    if (!isActive) {
+      handleStart();
+    } else if (isPaused) {
+      setIsPaused(false);
+      startTimer(timeLeft);
+    } else {
+      clearInterval(intervalId!);
+      setIsPaused(true);
+    }
+  };
+
   const handleStart = () => {
+    if (stage === 'warmup') {
+      startTimer(workout?.warmupTime * 1000 || 0);
+    } else if (stage === 'exercise') {
+      startTimer(workout?.exerciseTime * 1000 || 0);
+    } else if (stage === 'rest') {
+      startTimer(workout?.restTime * 1000 || 0);
+    } else if (stage === 'restBetweenRounds') {
+      startTimer(workout?.restBetweenRounds * 1000 || 0);
+    }
     setIsActive(true);
-    startTimer(stages[stage].duration);
   };
 
   useEffect(() => {
     if (timeLeft === 0 && isActive) {
-      switch (stage) {
-        case 'warmup':
-          setStage('exercise');
-          startTimer(stages.exercise.duration);
-          break;
-        case 'exercise':
+      if (stage === 'warmup') {
+        setStage('exercise');
+        setTimeLeft(workout?.exerciseTime * 1000 || 0);
+        startTimer(workout?.exerciseTime * 1000 || 0);
+      } else if (stage === 'exercise') {
+        if (currentExerciseIndex < workout?.exercises.length - 1) {
           setStage('rest');
-          startTimer(stages.rest.duration);
-          break;
-        case 'rest':
+          setTimeLeft(workout?.restTime * 1000 || 0);
+          startTimer(workout?.restTime * 1000 || 0);
+        } else if (roundIndex < workout?.rounds - 1) {
+          setStage('restBetweenRounds');
+          setTimeLeft(workout?.restBetweenRounds * 1000 || 0);
+          startTimer(workout?.restBetweenRounds * 1000 || 0);
+        } else {
           setStage('complete');
           setIsActive(false);
-          break;
-        case 'complete':
-          router.push('/workouts');
-          break;
+        }
+      } else if (stage === 'rest') {
+        if (currentExerciseIndex < workout?.exercises.length - 1) {
+          setCurrentExerciseIndex(currentExerciseIndex + 1);
+          setStage('exercise');
+          setTimeLeft(workout?.exerciseTime * 1000 || 0);
+          startTimer(workout?.exerciseTime * 1000 || 0);
+        } else if (roundIndex < workout?.rounds - 1) {
+          setStage('restBetweenRounds');
+          setTimeLeft(workout?.restBetweenRounds * 1000 || 0);
+          startTimer(workout?.restBetweenRounds * 1000 || 0);
+        } else {
+          setStage('complete');
+          setIsActive(false);
+        }
+      } else if (stage === 'restBetweenRounds') {
+        setCurrentExerciseIndex(0);
+        setRoundIndex(roundIndex + 1);
+        setStage('exercise');
+        setTimeLeft(workout?.exerciseTime * 1000 || 0);
+        startTimer(workout?.exerciseTime * 1000 || 0);
+      } else if (stage === 'complete') {
+        router.push('/workouts');
       }
     }
-  }, [timeLeft, isActive, stage, router]);
+  }, [timeLeft, isActive, stage, currentExerciseIndex, roundIndex, workout, router]);
 
   useEffect(() => {
     return () => {
@@ -83,16 +148,35 @@ const TrainWorkoutPage = () => {
 
   if (!workout) return <p>Loading...</p>;
 
+  const currentExercise = workout.exercises[currentExerciseIndex];
+  const stageLabel = stage === 'warmup' ? 'Разминка' :
+    stage === 'exercise' ? (currentExercise ? currentExercise.name : 'Нагрузка') :
+      stage === 'rest' ? 'Отдых' :
+        stage === 'restBetweenRounds' ? 'Отдых между раундами' :
+          'Завершено';
+
+  const buttonText = !isActive ? 'Старт' :
+    isPaused ? 'Продолжить' :
+      'Пауза';
+
   return (
     <div className={styles.container}>
       <h1>{workout.name}</h1>
-      <h2>{stages[stage].label}</h2>
+      <h2>{stageLabel}</h2>
       <div className={styles.timer}>
-        <p>{`${Math.floor(timeLeft / 60000)}:${(timeLeft % 60000) / 1000}`}</p>
+        <p>{`${Math.floor(timeLeft / 60000)}:${String((timeLeft % 60000) / 1000).padStart(2, '0')}`}</p>
       </div>
-      <button onClick={handleStart} disabled={isActive} className={styles.button}>
-        Начать тренировку
+      <button onClick={handleStartPause} className={styles.button}>
+        {buttonText}
       </button>
+      <div>
+        <h3>Exercises:</h3>
+        <ul>
+          {workout.exercises.map((exercise, index) => (
+            <li key={index}>{exercise.name}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };
