@@ -27,7 +27,8 @@ const TrainWorkoutPage = () => {
   const [roundIndex, setRoundIndex] = useState(0);
   const [stage, setStage] = useState('warmup');
   const [timeLeft, setTimeLeft] = useState(0);
-  const [intervalId, setIntervalId] = useState<NodeJS.Timer | null>(null);
+  const [nextExercise, setNextExercise] = useState('');
+  const [intervalId, setIntervalId] = useState<ReturnType<typeof setInterval> | null>(null);
   const router = useRouter();
   const { id } = useParams();
 
@@ -51,6 +52,7 @@ const TrainWorkoutPage = () => {
     if (workout) {
       setStage('warmup');
       setTimeLeft(workout.warmupTime * 1000);
+      setNextExercise(workout.exercises[0]?.name || '');
     }
   }, [workout]);
 
@@ -104,10 +106,15 @@ const TrainWorkoutPage = () => {
           setStage('rest');
           setTimeLeft(workout?.restTime * 1000 || 0);
           startTimer(workout?.restTime * 1000 || 0);
+          const nextExerciseIndex = currentExerciseIndex + 1;
+          const nextExerciseName = workout?.exercises[nextExerciseIndex]?.name || '';
+          setNextExercise(nextExerciseName);
         } else if (roundIndex < workout?.rounds - 1) {
           setStage('restBetweenRounds');
           setTimeLeft(workout?.restBetweenRounds * 1000 || 0);
           startTimer(workout?.restBetweenRounds * 1000 || 0);
+          const nextExerciseName = workout?.exercises[0]?.name || '';
+          setNextExercise(nextExerciseName);
         } else {
           setStage('complete');
           setIsActive(false);
@@ -118,10 +125,15 @@ const TrainWorkoutPage = () => {
           setStage('exercise');
           setTimeLeft(workout?.exerciseTime * 1000 || 0);
           startTimer(workout?.exerciseTime * 1000 || 0);
+          const nextExerciseIndex = currentExerciseIndex + 1;
+          const nextExerciseName = nextExerciseIndex < workout?.exercises.length ? workout?.exercises[nextExerciseIndex]?.name || '' : '';
+          setNextExercise(nextExerciseName);
         } else if (roundIndex < workout?.rounds - 1) {
           setStage('restBetweenRounds');
           setTimeLeft(workout?.restBetweenRounds * 1000 || 0);
           startTimer(workout?.restBetweenRounds * 1000 || 0);
+          const nextExerciseName = workout?.exercises[0]?.name || '';
+          setNextExercise(nextExerciseName);
         } else {
           setStage('complete');
           setIsActive(false);
@@ -132,6 +144,8 @@ const TrainWorkoutPage = () => {
         setStage('exercise');
         setTimeLeft(workout?.exerciseTime * 1000 || 0);
         startTimer(workout?.exerciseTime * 1000 || 0);
+        const nextExerciseName = workout?.exercises.length > 1 ? workout?.exercises[1]?.name || '' : '';
+        setNextExercise(nextExerciseName);
       } else if (stage === 'complete') {
         router.push('/workouts');
       }
@@ -162,21 +176,24 @@ const TrainWorkoutPage = () => {
   return (
     <div className={styles.container}>
       <h1>{workout.name}</h1>
-      <h2>{stageLabel}</h2>
-      <div className={styles.timer}>
-        <p>{`${Math.floor(timeLeft / 60000)}:${String((timeLeft % 60000) / 1000).padStart(2, '0')}`}</p>
-      </div>
       <button onClick={handleStartPause} className={styles.button}>
         {buttonText}
       </button>
-      <div>
-        <h3>Exercises:</h3>
-        <ul>
-          {workout.exercises.map((exercise, index) => (
-            <li key={index}>{exercise.name}</li>
-          ))}
-        </ul>
+      <div className={styles.timer}>
+        <p>{`${Math.floor(timeLeft / 60000)}:${String((timeLeft % 60000) / 1000).padStart(2, '0')}`}</p>
       </div>
+      <h2>{stageLabel}</h2>
+      { nextExercise && (
+        <h3>Далее: {nextExercise}</h3>
+      )}
+      {/*<div>*/}
+      {/*  <h3>Exercises:</h3>*/}
+      {/*  <ul>*/}
+      {/*    {workout.exercises.map((exercise, index) => (*/}
+      {/*      <li key={index}>{exercise.name}</li>*/}
+      {/*    ))}*/}
+      {/*  </ul>*/}
+      {/*</div>*/}
     </div>
   );
 };
