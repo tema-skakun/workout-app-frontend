@@ -1,35 +1,34 @@
-/* Header styles */
 header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #91badb;
 }
 
 header h1 {
-    margin: 0;
+  margin: 0;
 }
 
 header button {
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    cursor: pointer;
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 header button:hover {
-    background-color: #c82333;
+  background-color: #005bb5;
 }
 
 footer {
-    padding: 1rem;
-    background: #f8f9fa;
-    border-top: 1px solid #dee2e6;
-    text-align: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-top: 1px solid #91badb;
+  text-align: center;
 }
 
 nav {
@@ -38,7 +37,7 @@ nav {
 }
 
 nav button {
-  background-color: #007bff;
+  background-color: #0070f3;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -47,5 +46,5 @@ nav button {
 }
 
 nav button:hover {
-  background-color: #0056b3;
+  background-color: #005bb5;
 }

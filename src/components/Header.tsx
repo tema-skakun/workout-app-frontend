@@ -15,7 +15,6 @@ const Header = () => {
 
   return (
     <header>
-      <h1>Workout App</h1>
       {isLoggedIn && (
         <>
           <Navbar />
