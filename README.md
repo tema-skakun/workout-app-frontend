@@ -4,7 +4,7 @@
 
 - закрыть доступ для разлогиненых пользователей (проверить)
 - настроить стили
-- добавить звуковые уведомления для таймера
+- ~~добавить звуковые уведомления для таймера~~
 - ~~добавить подпись следующего упражнения во время отдыха~~
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).

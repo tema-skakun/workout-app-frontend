@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, {useState, useEffect, useCallback} from 'react';
+import {useRouter, useParams} from 'next/navigation';
 import api from '../../../lib/axios';
 import styles from './page.module.css';
 
@@ -37,7 +37,7 @@ const TrainWorkoutPage = () => {
       try {
         const token = localStorage.getItem('token');
         const response = await api.get(`/api/workouts/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: {Authorization: `Bearer ${token}`}
         });
         setWorkout(response.data);
       } catch (error) {
@@ -63,6 +63,16 @@ const TrainWorkoutPage = () => {
         if (prevTime <= 0) {
           clearInterval(id);
           return 0;
+        }
+        if (prevTime === 5000) {
+          playSound('ticking');
+        }
+        if (prevTime === 1000) {
+          // if (stage === 'exercise') {
+          // playSound('gong');
+          // } else {
+          playSound('whistle');
+          // }
         }
         return prevTime - 1000;
       });
@@ -121,27 +131,21 @@ const TrainWorkoutPage = () => {
         }
       } else if (stage === 'rest') {
         if (currentExerciseIndex < workout?.exercises.length - 1) {
-          setCurrentExerciseIndex(currentExerciseIndex + 1);
           setStage('exercise');
+          setCurrentExerciseIndex(currentExerciseIndex + 1);
           setTimeLeft(workout?.exerciseTime * 1000 || 0);
           startTimer(workout?.exerciseTime * 1000 || 0);
           const nextExerciseIndex = currentExerciseIndex + 1;
           const nextExerciseName = nextExerciseIndex < workout?.exercises.length ? workout?.exercises[nextExerciseIndex]?.name || '' : '';
-          setNextExercise(nextExerciseName);
-        } else if (roundIndex < workout?.rounds - 1) {
-          setStage('restBetweenRounds');
-          setTimeLeft(workout?.restBetweenRounds * 1000 || 0);
-          startTimer(workout?.restBetweenRounds * 1000 || 0);
-          const nextExerciseName = workout?.exercises[0]?.name || '';
           setNextExercise(nextExerciseName);
         } else {
           setStage('complete');
           setIsActive(false);
         }
       } else if (stage === 'restBetweenRounds') {
+        setStage('exercise');
         setCurrentExerciseIndex(0);
         setRoundIndex(roundIndex + 1);
-        setStage('exercise');
         setTimeLeft(workout?.exerciseTime * 1000 || 0);
         startTimer(workout?.exerciseTime * 1000 || 0);
         const nextExerciseName = workout?.exercises.length > 1 ? workout?.exercises[1]?.name || '' : '';
@@ -150,7 +154,7 @@ const TrainWorkoutPage = () => {
         router.push('/workouts');
       }
     }
-  }, [timeLeft, isActive, stage, currentExerciseIndex, roundIndex, workout, router]);
+  }, [timeLeft, isActive, stage, currentExerciseIndex, roundIndex, workout, router, startTimer]);
 
   useEffect(() => {
     return () => {
@@ -159,6 +163,17 @@ const TrainWorkoutPage = () => {
       }
     };
   }, [intervalId]);
+
+  const playSound = (type: string) => {
+    const sounds = {
+      whistle: '/sounds/whistle.mp3',
+      ticking: '/sounds/ticking.mp3',
+      gong: '/sounds/gong.mp3'
+    };
+
+    const audio = new Audio(sounds[type]);
+    audio.play();
+  };
 
   if (!workout) return <p>Loading...</p>;
 
@@ -175,16 +190,16 @@ const TrainWorkoutPage = () => {
 
   return (
     <div className={styles.container}>
-      <h1>{workout.name}</h1>
-      <button onClick={handleStartPause} className={styles.button}>
-        {buttonText}
-      </button>
+      <h3>{workout.name}</h3>
+      <h1>{stageLabel}</h1>
       <div className={styles.timer}>
         <p>{`${Math.floor(timeLeft / 60000)}:${String((timeLeft % 60000) / 1000).padStart(2, '0')}`}</p>
       </div>
-      <h2>{stageLabel}</h2>
-      { nextExercise && (
-        <h3>Далее: {nextExercise}</h3>
+      <button onClick={handleStartPause} className={styles.button}>
+        {buttonText}
+      </button>
+      { (stage === "rest" || stage === "restBetweenRounds" || stage === "warmup") && (
+        <h2>Далее: {nextExercise}</h2>
       )}
       {/*<div>*/}
       {/*  <h3>Exercises:</h3>*/}
