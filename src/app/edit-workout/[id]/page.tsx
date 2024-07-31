@@ -7,13 +7,15 @@ import { useParams } from 'next/navigation';
 
 const EditWorkoutPage = () => {
   const [workout, setWorkout] = useState<any>(null);
-  const [name, setName] = useState('');
-  const [exercises, setExercises] = useState([{ name: '' }]);
-  const [warmupTime, setWarmupTime] = useState(0);
-  const [exerciseTime, setExerciseTime] = useState(0);
-  const [restTime, setRestTime] = useState(0);
-  const [rounds, setRounds] = useState(1);
-  const [restBetweenRounds, setRestBetweenRounds] = useState(0);
+  const [formData, setFormData] = useState({
+    name: '',
+    exercises: [{ name: '' }],
+    warmupTime: 0,
+    exerciseTime: 0,
+    restTime: 0,
+    rounds: 1,
+    restBetweenRounds: 0,
+  });
   const [error, setError] = useState('');
   const router = useRouter();
   const { id } = useParams();
@@ -21,39 +23,63 @@ const EditWorkoutPage = () => {
   useEffect(() => {
     const fetchWorkout = async () => {
       const token = localStorage.getItem('token');
-      const response = await api.get(`/api/workouts/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setWorkout(response.data);
-      setName(response.data.name);
-      setExercises(response.data.exercises);
-      setWarmupTime(response.data.warmupTime);
-      setExerciseTime(response.data.exerciseTime);
-      setRestTime(response.data.restTime);
-      setRounds(response.data.rounds);
-      setRestBetweenRounds(response.data.restBetweenRounds);
+      if (!token) {
+        setError('You are not authenticated');
+        return;
+      }
+      try {
+        const response = await api.get(`/api/workouts/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setWorkout(response.data);
+        setFormData({
+          name: response.data.name,
+          exercises: response.data.exercises,
+          warmupTime: response.data.warmupTime,
+          exerciseTime: response.data.exerciseTime,
+          restTime: response.data.restTime,
+          rounds: response.data.rounds,
+          restBetweenRounds: response.data.restBetweenRounds,
+        });
+      } catch (err) {
+        setError('Failed to fetch workout. Please try again.');
+      }
     };
 
     fetchWorkout();
   }, [id]);
 
-  const handleAddExercise = () => {
-    setExercises([...exercises, { name: '' }]);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'rounds' || name.includes('Time') ? Number(value) : value,
+    }));
   };
 
   const handleExerciseChange = (index: number, value: string) => {
-    const newExercises = exercises.slice();
+    const newExercises = formData.exercises.slice();
     newExercises[index].name = value;
-    setExercises(newExercises);
+    setFormData(prev => ({
+      ...prev,
+      exercises: newExercises,
+    }));
+  };
+
+  const handleAddExercise = () => {
+    setFormData(prev => ({
+      ...prev,
+      exercises: [...prev.exercises, { name: '' }],
+    }));
   };
 
   const handleSaveWorkout = async () => {
     setError('');
-    if (!name) {
+    if (!formData.name) {
       setError('Workout name cannot be empty.');
       return;
     }
-    for (const exercise of exercises) {
+    for (const exercise of formData.exercises) {
       if (!exercise.name) {
         setError('Exercise names cannot be empty.');
         return;
@@ -61,17 +87,13 @@ const EditWorkoutPage = () => {
     }
 
     const token = localStorage.getItem('token');
+    if (!token) {
+      setError('You are not authenticated');
+      return;
+    }
     try {
-      await api.put(`/api/workouts/${id}`, {
-        name,
-        exercises,
-        warmupTime,
-        exerciseTime,
-        restTime,
-        rounds,
-        restBetweenRounds
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
+      await api.put(`/api/workouts/${id}`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
       });
       router.push('/workouts');
     } catch (error) {
@@ -87,40 +109,45 @@ const EditWorkoutPage = () => {
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <input
         type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
+        name="name"
+        value={formData.name}
+        onChange={handleChange}
         placeholder="Workout Name"
       />
       <div>
         <label>Warmup Time (seconds):</label>
         <input
           type="number"
-          value={warmupTime}
-          onChange={(e) => setWarmupTime(Number(e.target.value))}
+          name="warmupTime"
+          value={formData.warmupTime}
+          onChange={handleChange}
         />
       </div>
       <div>
         <label>Exercise Time (seconds):</label>
         <input
           type="number"
-          value={exerciseTime}
-          onChange={(e) => setExerciseTime(Number(e.target.value))}
+          name="exerciseTime"
+          value={formData.exerciseTime}
+          onChange={handleChange}
         />
       </div>
       <div>
         <label>Rest Time (seconds):</label>
         <input
           type="number"
-          value={restTime}
-          onChange={(e) => setRestTime(Number(e.target.value))}
+          name="restTime"
+          value={formData.restTime}
+          onChange={handleChange}
         />
       </div>
       <div>
         <label>Rounds:</label>
         <input
           type="number"
-          value={rounds}
-          onChange={(e) => setRounds(Number(e.target.value))}
+          name="rounds"
+          value={formData.rounds}
+          onChange={handleChange}
           min="1"
         />
       </div>
@@ -128,11 +155,12 @@ const EditWorkoutPage = () => {
         <label>Rest Between Rounds (seconds):</label>
         <input
           type="number"
-          value={restBetweenRounds}
-          onChange={(e) => setRestBetweenRounds(Number(e.target.value))}
+          name="restBetweenRounds"
+          value={formData.restBetweenRounds}
+          onChange={handleChange}
         />
       </div>
-      {exercises.map((exercise, index) => (
+      {formData.exercises.map((exercise, index) => (
         <div key={index}>
           <input
             type="text"

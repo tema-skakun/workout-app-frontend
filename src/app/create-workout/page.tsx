@@ -4,32 +4,50 @@ import { useState } from 'react';
 import api from '@/api/axios';
 
 const CreateWorkoutPage = () => {
-  const [name, setName] = useState('');
-  const [exercises, setExercises] = useState([{ name: '' }]);
-  const [warmupTime, setWarmupTime] = useState(0);
-  const [exerciseTime, setExerciseTime] = useState(0);
-  const [restTime, setRestTime] = useState(0);
-  const [rounds, setRounds] = useState(1);
-  const [restBetweenRounds, setRestBetweenRounds] = useState(0);
+  const [formData, setFormData] = useState({
+    name: '',
+    exercises: [{ name: '' }],
+    warmupTime: 0,
+    exerciseTime: 0,
+    restTime: 0,
+    rounds: 1,
+    restBetweenRounds: 0,
+  });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
-  const handleAddExercise = () => {
-    setExercises([...exercises, { name: '' }]);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'rounds' || name.includes('Time') ? Number(value) : value,
+    }));
   };
 
   const handleExerciseChange = (index: number, value: string) => {
-    const newExercises = exercises.slice();
+    const newExercises = formData.exercises.slice();
     newExercises[index].name = value;
-    setExercises(newExercises);
+    setFormData(prev => ({
+      ...prev,
+      exercises: newExercises,
+    }));
+  };
+
+  const handleAddExercise = () => {
+    setFormData(prev => ({
+      ...prev,
+      exercises: [...prev.exercises, { name: '' }],
+    }));
   };
 
   const handleCreateWorkout = async () => {
     setError('');
-    if (!name) {
+    setSuccess(false);
+    if (!formData.name) {
       setError('Workout name cannot be empty.');
       return;
     }
-    for (const exercise of exercises) {
+    for (const exercise of formData.exercises) {
       if (!exercise.name) {
         setError('Exercise names cannot be empty.');
         return;
@@ -37,25 +55,24 @@ const CreateWorkoutPage = () => {
     }
 
     const token = localStorage.getItem('token');
+    if (!token) {
+      setError('You are not authenticated');
+      return;
+    }
     try {
-      await api.post('/api/workouts', {
-        name,
-        exercises,
-        warmupTime,
-        exerciseTime,
-        restTime,
-        rounds,
-        restBetweenRounds
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
+      await api.post('/api/workouts', formData, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      setName('');
-      setExercises([{ name: '' }]);
-      setWarmupTime(0);
-      setExerciseTime(0);
-      setRestTime(0);
-      setRounds(1);
-      setRestBetweenRounds(0);
+      setSuccess(true);
+      setFormData({
+        name: '',
+        exercises: [{ name: '' }],
+        warmupTime: 0,
+        exerciseTime: 0,
+        restTime: 0,
+        rounds: 1,
+        restBetweenRounds: 0,
+      });
     } catch (error) {
       setError('Failed to create workout. Please try again.');
     }
@@ -65,42 +82,48 @@ const CreateWorkoutPage = () => {
     <div>
       <h1>Create Workout</h1>
       {error && <p style={{ color: 'red' }}>{error}</p>}
+      {success && <p style={{ color: 'green' }}>Workout created successfully!</p>}
       <input
         type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
+        name="name"
+        value={formData.name}
+        onChange={handleChange}
         placeholder="Workout Name"
       />
       <div>
         <label>Warmup Time (seconds):</label>
         <input
           type="number"
-          value={warmupTime}
-          onChange={(e) => setWarmupTime(Number(e.target.value))}
+          name="warmupTime"
+          value={formData.warmupTime}
+          onChange={handleChange}
         />
       </div>
       <div>
         <label>Exercise Time (seconds):</label>
         <input
           type="number"
-          value={exerciseTime}
-          onChange={(e) => setExerciseTime(Number(e.target.value))}
+          name="exerciseTime"
+          value={formData.exerciseTime}
+          onChange={handleChange}
         />
       </div>
       <div>
         <label>Rest Time (seconds):</label>
         <input
           type="number"
-          value={restTime}
-          onChange={(e) => setRestTime(Number(e.target.value))}
+          name="restTime"
+          value={formData.restTime}
+          onChange={handleChange}
         />
       </div>
       <div>
         <label>Rounds:</label>
         <input
           type="number"
-          value={rounds}
-          onChange={(e) => setRounds(Number(e.target.value))}
+          name="rounds"
+          value={formData.rounds}
+          onChange={handleChange}
           min="1"
         />
       </div>
@@ -108,11 +131,12 @@ const CreateWorkoutPage = () => {
         <label>Rest Between Rounds (seconds):</label>
         <input
           type="number"
-          value={restBetweenRounds}
-          onChange={(e) => setRestBetweenRounds(Number(e.target.value))}
+          name="restBetweenRounds"
+          value={formData.restBetweenRounds}
+          onChange={handleChange}
         />
       </div>
-      {exercises.map((exercise, index) => (
+      {formData.exercises.map((exercise, index) => (
         <div key={index}>
           <input
             type="text"

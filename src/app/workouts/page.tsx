@@ -17,10 +17,18 @@ const YourWorkoutsPage = () => {
   useEffect(() => {
     const fetchWorkouts = async () => {
       const token = localStorage.getItem('token');
-      const response = await api.get('/api/workouts', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setWorkouts(response.data);
+      if (!token) {
+        setError('You are not authenticated');
+        return;
+      }
+      try {
+        const response = await api.get('/api/workouts', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setWorkouts(response.data);
+      } catch (err) {
+        setError('Failed to fetch workouts. Please try again.');
+      }
     };
 
     fetchWorkouts();
@@ -29,8 +37,12 @@ const YourWorkoutsPage = () => {
   const handleDelete = async (id: string) => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        setError('You are not authenticated');
+        return;
+      }
       await api.delete(`/api/workouts/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       setWorkouts(workouts.filter(workout => workout._id !== id));
     } catch (err) {

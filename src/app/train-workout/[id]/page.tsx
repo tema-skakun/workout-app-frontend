@@ -13,7 +13,7 @@ interface Workout {
   name: string;
   exercises: Exercise[];
   warmupTime: number;
-  exerciseTime: number;
+  exerciseTime?: number;
   restTime: number;
   rounds: number;
   restBetweenRounds: number;
@@ -118,8 +118,8 @@ const TrainWorkoutPage = () => {
     if (timeLeft === 0 && isActive) {
       if (stage === 'warmup') {
         setStage('exercise');
-        setTimeLeft(workout?.exerciseTime * 1000 || 0);
-        startTimer(workout?.exerciseTime * 1000 || 0);
+        setTimeLeft(workout?.exerciseTime ? workout.exerciseTime * 1000 : 0);
+        startTimer(workout?.exerciseTime ? workout.exerciseTime * 1000 : 0);
       } else if (stage === 'exercise') {
         if (currentExerciseIndex < (workout?.exercises?.length ?? 0) - 1) {
           setStage('rest');
@@ -142,8 +142,8 @@ const TrainWorkoutPage = () => {
         if (currentExerciseIndex < workout?.exercises.length - 1) {
           setStage('exercise');
           setCurrentExerciseIndex(currentExerciseIndex + 1);
-          setTimeLeft(workout?.exerciseTime * 1000 || 0);
-          startTimer(workout?.exerciseTime * 1000 || 0);
+          setTimeLeft(workout?.exerciseTime ? workout.exerciseTime * 1000 : 0);
+          startTimer(workout?.exerciseTime ? workout.exerciseTime * 1000 : 0);
           const nextExerciseIndex = currentExerciseIndex + 1;
           const nextExerciseName = nextExerciseIndex < (workout?.exercises?.length ?? 0)
             ? workout?.exercises[nextExerciseIndex]?.name || ''
@@ -157,8 +157,8 @@ const TrainWorkoutPage = () => {
         setStage('exercise');
         setCurrentExerciseIndex(0);
         setRoundIndex(roundIndex + 1);
-        setTimeLeft(workout?.exerciseTime * 1000 || 0);
-        startTimer(workout?.exerciseTime * 1000 || 0);
+        setTimeLeft(workout?.exerciseTime ? workout.exerciseTime * 1000 : 0);
+        startTimer(workout?.exerciseTime ? workout.exerciseTime * 1000 : 0);
         const nextExerciseName = (workout?.exercises?.length ?? 0) > 1
           ? workout?.exercises[1]?.name || ''
           : '';
