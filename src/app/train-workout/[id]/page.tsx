@@ -2,7 +2,7 @@
 
 import React, {useState, useEffect, useCallback} from 'react';
 import {useRouter, useParams} from 'next/navigation';
-import api from '../../../lib/axios';
+import api from '@/api/axios';
 import styles from './page.module.css';
 
 interface Exercise {
@@ -19,6 +19,19 @@ interface Workout {
   restBetweenRounds: number;
 }
 
+const sounds = {
+  whistle: '/sounds/whistle.mp3',
+  ticking: '/sounds/ticking.mp3',
+  gong: '/sounds/gong.mp3'
+};
+
+type SoundType = keyof typeof sounds;
+
+const playSound = (type: SoundType) => {
+  const audio = new Audio(sounds[type]);
+  audio.play();
+};
+
 const TrainWorkoutPage = () => {
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [isActive, setIsActive] = useState(false);
@@ -30,7 +43,7 @@ const TrainWorkoutPage = () => {
   const [nextExercise, setNextExercise] = useState('');
   const [intervalId, setIntervalId] = useState<ReturnType<typeof setInterval> | null>(null);
   const router = useRouter();
-  const { id } = useParams();
+  const {id} = useParams();
 
   useEffect(() => {
     const fetchWorkout = async () => {
@@ -56,7 +69,7 @@ const TrainWorkoutPage = () => {
     }
   }, [workout]);
 
-  const startTimer = (duration: number) => {
+  const startTimer = useCallback((duration: number) => {
     setTimeLeft(duration);
     const id = setInterval(() => {
       setTimeLeft(prevTime => {
@@ -68,17 +81,13 @@ const TrainWorkoutPage = () => {
           playSound('ticking');
         }
         if (prevTime === 1000) {
-          // if (stage === 'exercise') {
-          // playSound('gong');
-          // } else {
           playSound('whistle');
-          // }
         }
         return prevTime - 1000;
       });
     }, 1000);
     setIntervalId(id);
-  };
+  }, []);
 
   const handleStartPause = () => {
     if (!isActive) {
@@ -94,13 +103,13 @@ const TrainWorkoutPage = () => {
 
   const handleStart = () => {
     if (stage === 'warmup') {
-      startTimer(workout?.warmupTime * 1000 || 0);
+      startTimer((workout?.warmupTime ? workout.warmupTime * 1000 : 0));
     } else if (stage === 'exercise') {
-      startTimer(workout?.exerciseTime * 1000 || 0);
+      startTimer((workout?.exerciseTime ? workout.exerciseTime * 1000 : 0));
     } else if (stage === 'rest') {
-      startTimer(workout?.restTime * 1000 || 0);
+      startTimer((workout?.restTime ? workout.restTime * 1000 : 0));
     } else if (stage === 'restBetweenRounds') {
-      startTimer(workout?.restBetweenRounds * 1000 || 0);
+      startTimer((workout?.restBetweenRounds ? workout.restBetweenRounds * 1000 : 0));
     }
     setIsActive(true);
   };
@@ -112,14 +121,14 @@ const TrainWorkoutPage = () => {
         setTimeLeft(workout?.exerciseTime * 1000 || 0);
         startTimer(workout?.exerciseTime * 1000 || 0);
       } else if (stage === 'exercise') {
-        if (currentExerciseIndex < workout?.exercises.length - 1) {
+        if (currentExerciseIndex < (workout?.exercises?.length ?? 0) - 1) {
           setStage('rest');
           setTimeLeft(workout?.restTime * 1000 || 0);
           startTimer(workout?.restTime * 1000 || 0);
           const nextExerciseIndex = currentExerciseIndex + 1;
           const nextExerciseName = workout?.exercises[nextExerciseIndex]?.name || '';
           setNextExercise(nextExerciseName);
-        } else if (roundIndex < workout?.rounds - 1) {
+        } else if (roundIndex < (workout?.rounds ?? 0) - 1) {
           setStage('restBetweenRounds');
           setTimeLeft(workout?.restBetweenRounds * 1000 || 0);
           startTimer(workout?.restBetweenRounds * 1000 || 0);
@@ -136,7 +145,9 @@ const TrainWorkoutPage = () => {
           setTimeLeft(workout?.exerciseTime * 1000 || 0);
           startTimer(workout?.exerciseTime * 1000 || 0);
           const nextExerciseIndex = currentExerciseIndex + 1;
-          const nextExerciseName = nextExerciseIndex < workout?.exercises.length ? workout?.exercises[nextExerciseIndex]?.name || '' : '';
+          const nextExerciseName = nextExerciseIndex < (workout?.exercises?.length ?? 0)
+            ? workout?.exercises[nextExerciseIndex]?.name || ''
+            : '';
           setNextExercise(nextExerciseName);
         } else {
           setStage('complete');
@@ -148,7 +159,9 @@ const TrainWorkoutPage = () => {
         setRoundIndex(roundIndex + 1);
         setTimeLeft(workout?.exerciseTime * 1000 || 0);
         startTimer(workout?.exerciseTime * 1000 || 0);
-        const nextExerciseName = workout?.exercises.length > 1 ? workout?.exercises[1]?.name || '' : '';
+        const nextExerciseName = (workout?.exercises?.length ?? 0) > 1
+          ? workout?.exercises[1]?.name || ''
+          : '';
         setNextExercise(nextExerciseName);
       } else if (stage === 'complete') {
         router.push('/workouts');
@@ -163,17 +176,6 @@ const TrainWorkoutPage = () => {
       }
     };
   }, [intervalId]);
-
-  const playSound = (type: string) => {
-    const sounds = {
-      whistle: '/sounds/whistle.mp3',
-      ticking: '/sounds/ticking.mp3',
-      gong: '/sounds/gong.mp3'
-    };
-
-    const audio = new Audio(sounds[type]);
-    audio.play();
-  };
 
   if (!workout) return <p>Loading...</p>;
 
@@ -198,7 +200,7 @@ const TrainWorkoutPage = () => {
       <button onClick={handleStartPause} className={styles.button}>
         {buttonText}
       </button>
-      { (stage === "rest" || stage === "restBetweenRounds" || stage === "warmup") && (
+      {(stage === "rest" || stage === "restBetweenRounds" || stage === "warmup") && (
         <h2>Далее: {nextExercise}</h2>
       )}
       {/*<div>*/}

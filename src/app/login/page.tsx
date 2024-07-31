@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { useState } from 'react';
-import api from '../../lib/axios';
+import api from '@/api/axios';
 import { useRouter } from 'next/navigation';
 
 const LoginPage = () => {

@@ -1,14 +1,18 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import api from '../../lib/axios';
-import { useRouter } from 'next/navigation';
+import api from '@/api/axios';
 import Link from 'next/link';
 
+interface Workout {
+  _id: string;
+  name: string;
+  duration: number;
+}
+
 const YourWorkoutsPage = () => {
-  const [workouts, setWorkouts] = useState([]);
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [error, setError] = useState('');
-  const router = useRouter();
 
   useEffect(() => {
     const fetchWorkouts = async () => {
