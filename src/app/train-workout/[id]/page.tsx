@@ -123,15 +123,15 @@ const TrainWorkoutPage = () => {
       } else if (stage === 'exercise') {
         if (currentExerciseIndex < (workout?.exercises?.length ?? 0) - 1) {
           setStage('rest');
-          setTimeLeft(workout?.restTime * 1000 || 0);
-          startTimer(workout?.restTime * 1000 || 0);
+          setTimeLeft(workout?.restTime ? workout.restTime * 1000 : 0);
+          startTimer(workout?.restTime ? workout.restTime * 1000 : 0);
           const nextExerciseIndex = currentExerciseIndex + 1;
           const nextExerciseName = workout?.exercises[nextExerciseIndex]?.name || '';
           setNextExercise(nextExerciseName);
         } else if (roundIndex < (workout?.rounds ?? 0) - 1) {
           setStage('restBetweenRounds');
-          setTimeLeft(workout?.restBetweenRounds * 1000 || 0);
-          startTimer(workout?.restBetweenRounds * 1000 || 0);
+          setTimeLeft(workout?.restBetweenRounds ? workout.restBetweenRounds * 1000 : 0);
+          startTimer(workout?.restBetweenRounds ? workout.restBetweenRounds * 1000 : 0);
           const nextExerciseName = workout?.exercises[0]?.name || '';
           setNextExercise(nextExerciseName);
         } else {
@@ -139,7 +139,7 @@ const TrainWorkoutPage = () => {
           setIsActive(false);
         }
       } else if (stage === 'rest') {
-        if (currentExerciseIndex < workout?.exercises.length - 1) {
+        if (currentExerciseIndex < (workout?.exercises.length ?? 0) - 1) {
           setStage('exercise');
           setCurrentExerciseIndex(currentExerciseIndex + 1);
           setTimeLeft(workout?.exerciseTime ? workout.exerciseTime * 1000 : 0);
