@@ -1,18 +1,18 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import api from '@/api/axios';
 import TimeInput from '@/components/TimeInput';
 import ExerciseInputs from '@/components/ExerciseInputs';
 import useWorkoutForm from '@/hooks/useWorkoutForm';
+import { useRouter } from 'next/navigation';
 
 const CreateWorkoutPage = () => {
+  const router = useRouter();
   const {
     formData,
     error,
-    success,
     setError,
-    setSuccess,
     handleChange,
     handleExerciseChange,
     handleAddExercise,
@@ -26,9 +26,34 @@ const CreateWorkoutPage = () => {
     restBetweenRounds: 5,
   });
 
+  const [formErrors, setFormErrors] = useState({
+    warmupTime: false,
+    exerciseTime: false,
+    restTime: false,
+    restBetweenRounds: false,
+    rounds: false
+  });
+
+  const validateForm = () => {
+    const errors = {
+      warmupTime: formData.warmupTime < 5,
+      exerciseTime: formData.exerciseTime < 5,
+      restTime: formData.restTime < 5,
+      restBetweenRounds: formData.restBetweenRounds < 5,
+      rounds: formData.rounds < 1
+    };
+    setFormErrors(errors);
+    return !Object.values(errors).includes(true);
+  };
+
   const handleCreateWorkout = async () => {
+    if (!validateForm()) {
+      setError('Please correct the errors in the form.');
+      return;
+    }
+
     setError('');
-    setSuccess(false);
+
     if (!formData.name) {
       setError('Workout name cannot be empty.');
       return;
@@ -49,7 +74,7 @@ const CreateWorkoutPage = () => {
       await api.post('/api/workouts', formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setSuccess(true);
+      router.push('/workouts?success=true');
     } catch (error) {
       setError('Failed to create workout. Please try again.');
     }
@@ -59,7 +84,6 @@ const CreateWorkoutPage = () => {
     <div>
       <h1>Create Workout</h1>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {success && <p style={{ color: 'green' }}>Workout created successfully!</p>}
       <input
         type="text"
         name="name"
@@ -74,6 +98,7 @@ const CreateWorkoutPage = () => {
         value={formData.warmupTime}
         min={5}
         onChange={handleChange}
+        hasError={formErrors.warmupTime}
       />
       <TimeInput
         label="Exercise Time"
@@ -81,6 +106,7 @@ const CreateWorkoutPage = () => {
         value={formData.exerciseTime}
         min={5}
         onChange={handleChange}
+        hasError={formErrors.exerciseTime}
       />
       <TimeInput
         label="Rest Time"
@@ -88,6 +114,7 @@ const CreateWorkoutPage = () => {
         value={formData.restTime}
         min={5}
         onChange={handleChange}
+        hasError={formErrors.restTime}
       />
       <TimeInput
         label="Rounds"
@@ -95,6 +122,7 @@ const CreateWorkoutPage = () => {
         value={formData.rounds}
         min={1}
         onChange={handleChange}
+        hasError={formErrors.rounds}
       />
       <TimeInput
         label="Rest Between Rounds"
@@ -102,6 +130,7 @@ const CreateWorkoutPage = () => {
         value={formData.restBetweenRounds}
         min={5}
         onChange={handleChange}
+        hasError={formErrors.restBetweenRounds}
       />
       <ExerciseInputs
         exercises={formData.exercises}

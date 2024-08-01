@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import api from '@/api/axios';
 import TimeInput from '@/components/TimeInput';
 import ExerciseInputs from '@/components/ExerciseInputs';
