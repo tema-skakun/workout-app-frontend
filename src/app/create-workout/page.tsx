@@ -1,44 +1,30 @@
 "use client";
 
-import { useState } from 'react';
+import React from 'react';
 import api from '@/api/axios';
+import TimeInput from '@/components/TimeInput';
+import ExerciseInputs from '@/components/ExerciseInputs';
+import useWorkoutForm from '@/hooks/useWorkoutForm';
 
 const CreateWorkoutPage = () => {
-  const [formData, setFormData] = useState({
+  const {
+    formData,
+    error,
+    success,
+    setError,
+    setSuccess,
+    handleChange,
+    handleExerciseChange,
+    handleAddExercise,
+  } = useWorkoutForm({
     name: '',
     exercises: [{ name: '' }],
-    warmupTime: 0,
-    exerciseTime: 0,
-    restTime: 0,
+    warmupTime: 5,
+    exerciseTime: 5,
+    restTime: 5,
     rounds: 1,
-    restBetweenRounds: 0,
+    restBetweenRounds: 5,
   });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'rounds' || name.includes('Time') ? Number(value) : value,
-    }));
-  };
-
-  const handleExerciseChange = (index: number, value: string) => {
-    const newExercises = formData.exercises.slice();
-    newExercises[index].name = value;
-    setFormData(prev => ({
-      ...prev,
-      exercises: newExercises,
-    }));
-  };
-
-  const handleAddExercise = () => {
-    setFormData(prev => ({
-      ...prev,
-      exercises: [...prev.exercises, { name: '' }],
-    }));
-  };
 
   const handleCreateWorkout = async () => {
     setError('');
@@ -64,15 +50,6 @@ const CreateWorkoutPage = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSuccess(true);
-      setFormData({
-        name: '',
-        exercises: [{ name: '' }],
-        warmupTime: 0,
-        exerciseTime: 0,
-        restTime: 0,
-        rounds: 1,
-        restBetweenRounds: 0,
-      });
     } catch (error) {
       setError('Failed to create workout. Please try again.');
     }
@@ -89,64 +66,49 @@ const CreateWorkoutPage = () => {
         value={formData.name}
         onChange={handleChange}
         placeholder="Workout Name"
+        autoFocus={true}
       />
-      <div>
-        <label>Warmup Time (seconds):</label>
-        <input
-          type="number"
-          name="warmupTime"
-          value={formData.warmupTime}
-          onChange={handleChange}
-        />
-      </div>
-      <div>
-        <label>Exercise Time (seconds):</label>
-        <input
-          type="number"
-          name="exerciseTime"
-          value={formData.exerciseTime}
-          onChange={handleChange}
-        />
-      </div>
-      <div>
-        <label>Rest Time (seconds):</label>
-        <input
-          type="number"
-          name="restTime"
-          value={formData.restTime}
-          onChange={handleChange}
-        />
-      </div>
-      <div>
-        <label>Rounds:</label>
-        <input
-          type="number"
-          name="rounds"
-          value={formData.rounds}
-          onChange={handleChange}
-          min="1"
-        />
-      </div>
-      <div>
-        <label>Rest Between Rounds (seconds):</label>
-        <input
-          type="number"
-          name="restBetweenRounds"
-          value={formData.restBetweenRounds}
-          onChange={handleChange}
-        />
-      </div>
-      {formData.exercises.map((exercise, index) => (
-        <div key={index}>
-          <input
-            type="text"
-            value={exercise.name}
-            onChange={(e) => handleExerciseChange(index, e.target.value)}
-            placeholder="Exercise Name"
-          />
-        </div>
-      ))}
-      <button onClick={handleAddExercise}>Add Exercise</button>
+      <TimeInput
+        label="Warmup Time"
+        name="warmupTime"
+        value={formData.warmupTime}
+        min={5}
+        onChange={handleChange}
+      />
+      <TimeInput
+        label="Exercise Time"
+        name="exerciseTime"
+        value={formData.exerciseTime}
+        min={5}
+        onChange={handleChange}
+      />
+      <TimeInput
+        label="Rest Time"
+        name="restTime"
+        value={formData.restTime}
+        min={5}
+        onChange={handleChange}
+      />
+      <TimeInput
+        label="Rounds"
+        name="rounds"
+        value={formData.rounds}
+        min={1}
+        onChange={handleChange}
+      />
+      <TimeInput
+        label="Rest Between Rounds"
+        name="restBetweenRounds"
+        value={formData.restBetweenRounds}
+        min={5}
+        onChange={handleChange}
+      />
+      <ExerciseInputs
+        exercises={formData.exercises}
+        onChange={handleExerciseChange}
+        onAdd={handleAddExercise}
+        autoFocus={true}
+      />
       <button onClick={handleCreateWorkout}>Create Workout</button>
     </div>
   );

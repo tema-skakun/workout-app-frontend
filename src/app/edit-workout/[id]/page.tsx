@@ -1,24 +1,32 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import api from '@/api/axios';
-import { useRouter } from 'next/navigation';
-import { useParams } from 'next/navigation';
+import TimeInput from '@/components/TimeInput';
+import ExerciseInputs from '@/components/ExerciseInputs';
+import useWorkoutForm from '@/hooks/useWorkoutForm';
+import { useRouter, useParams } from 'next/navigation';
 
 const EditWorkoutPage = () => {
-  const [workout, setWorkout] = useState<any>(null);
-  const [formData, setFormData] = useState({
+  const { id } = useParams();
+  const router = useRouter();
+  const {
+    formData,
+    error,
+    setError,
+    setFormData,
+    handleChange,
+    handleExerciseChange,
+    handleAddExercise,
+  } = useWorkoutForm({
     name: '',
     exercises: [{ name: '' }],
-    warmupTime: 0,
-    exerciseTime: 0,
-    restTime: 0,
+    warmupTime: 5,
+    exerciseTime: 5,
+    restTime: 5,
     rounds: 1,
-    restBetweenRounds: 0,
+    restBetweenRounds: 5,
   });
-  const [error, setError] = useState('');
-  const router = useRouter();
-  const { id } = useParams();
 
   useEffect(() => {
     const fetchWorkout = async () => {
@@ -31,15 +39,15 @@ const EditWorkoutPage = () => {
         const response = await api.get(`/api/workouts/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setWorkout(response.data);
+        const data = response.data;
         setFormData({
-          name: response.data.name,
-          exercises: response.data.exercises,
-          warmupTime: response.data.warmupTime,
-          exerciseTime: response.data.exerciseTime,
-          restTime: response.data.restTime,
-          rounds: response.data.rounds,
-          restBetweenRounds: response.data.restBetweenRounds,
+          name: data.name,
+          exercises: data.exercises,
+          warmupTime: data.warmupTime,
+          exerciseTime: data.exerciseTime,
+          restTime: data.restTime,
+          rounds: data.rounds,
+          restBetweenRounds: data.restBetweenRounds,
         });
       } catch (err) {
         setError('Failed to fetch workout. Please try again.');
@@ -48,30 +56,6 @@ const EditWorkoutPage = () => {
 
     fetchWorkout();
   }, [id]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'rounds' || name.includes('Time') ? Number(value) : value,
-    }));
-  };
-
-  const handleExerciseChange = (index: number, value: string) => {
-    const newExercises = formData.exercises.slice();
-    newExercises[index].name = value;
-    setFormData(prev => ({
-      ...prev,
-      exercises: newExercises,
-    }));
-  };
-
-  const handleAddExercise = () => {
-    setFormData(prev => ({
-      ...prev,
-      exercises: [...prev.exercises, { name: '' }],
-    }));
-  };
 
   const handleSaveWorkout = async () => {
     setError('');
@@ -101,7 +85,7 @@ const EditWorkoutPage = () => {
     }
   };
 
-  if (!workout) return <p>Loading...</p>;
+  if (!formData) return <p>Loading...</p>;
 
   return (
     <div>
@@ -113,64 +97,49 @@ const EditWorkoutPage = () => {
         value={formData.name}
         onChange={handleChange}
         placeholder="Workout Name"
+        autoFocus={true}
       />
-      <div>
-        <label>Warmup Time (seconds):</label>
-        <input
-          type="number"
-          name="warmupTime"
-          value={formData.warmupTime}
-          onChange={handleChange}
-        />
-      </div>
-      <div>
-        <label>Exercise Time (seconds):</label>
-        <input
-          type="number"
-          name="exerciseTime"
-          value={formData.exerciseTime}
-          onChange={handleChange}
-        />
-      </div>
-      <div>
-        <label>Rest Time (seconds):</label>
-        <input
-          type="number"
-          name="restTime"
-          value={formData.restTime}
-          onChange={handleChange}
-        />
-      </div>
-      <div>
-        <label>Rounds:</label>
-        <input
-          type="number"
-          name="rounds"
-          value={formData.rounds}
-          onChange={handleChange}
-          min="1"
-        />
-      </div>
-      <div>
-        <label>Rest Between Rounds (seconds):</label>
-        <input
-          type="number"
-          name="restBetweenRounds"
-          value={formData.restBetweenRounds}
-          onChange={handleChange}
-        />
-      </div>
-      {formData.exercises.map((exercise, index) => (
-        <div key={index}>
-          <input
-            type="text"
-            value={exercise.name}
-            onChange={(e) => handleExerciseChange(index, e.target.value)}
-            placeholder="Exercise Name"
-          />
-        </div>
-      ))}
-      <button onClick={handleAddExercise}>Add Exercise</button>
+      <TimeInput
+        label="Warmup Time"
+        name="warmupTime"
+        value={formData.warmupTime}
+        min={5}
+        onChange={handleChange}
+      />
+      <TimeInput
+        label="Exercise Time"
+        name="exerciseTime"
+        value={formData.exerciseTime}
+        min={5}
+        onChange={handleChange}
+      />
+      <TimeInput
+        label="Rest Time"
+        name="restTime"
+        value={formData.restTime}
+        min={5}
+        onChange={handleChange}
+      />
+      <TimeInput
+        label="Rounds"
+        name="rounds"
+        value={formData.rounds}
+        min={1}
+        onChange={handleChange}
+      />
+      <TimeInput
+        label="Rest Between Rounds"
+        name="restBetweenRounds"
+        value={formData.restBetweenRounds}
+        min={5}
+        onChange={handleChange}
+      />
+      <ExerciseInputs
+        exercises={formData.exercises}
+        onChange={handleExerciseChange}
+        onAdd={handleAddExercise}
+        autoFocus={true}
+      />
       <button onClick={handleSaveWorkout}>Save Workout</button>
     </div>
   );

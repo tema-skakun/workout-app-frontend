@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import api from '@/api/axios';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Workout {
   _id: string;
@@ -13,6 +14,7 @@ interface Workout {
 const YourWorkoutsPage = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [error, setError] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     const fetchWorkouts = async () => {
@@ -50,6 +52,10 @@ const YourWorkoutsPage = () => {
     }
   };
 
+  const handleEdit = (id: string) => {
+    router.push(`/edit-workout/${id}`);
+  };
+
   return (
     <div>
       <h1>Your Workouts</h1>
@@ -60,7 +66,7 @@ const YourWorkoutsPage = () => {
             <Link href={`/train-workout/${workout._id}`}>
               {workout.name}
             </Link>
-            {/*<button onClick={() => handleEdit(workout._id)}>Edit</button>*/}
+            <button onClick={() => handleEdit(workout._id)}>Edit</button>
             <button onClick={() => handleDelete(workout._id)}>Delete</button>
           </li>
         ))}
